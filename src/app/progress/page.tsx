@@ -200,16 +200,3 @@ function NavBtn({ icon, label, active = false }: any) {
     </div>
   );
 }
-
-
-function StatCard({ icon, value, label, color, bg }: any) {
-  return (
-    <div className="bg-white p-4 rounded-[24px] border border-slate-100 text-center">
-      <div className={`${bg} w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-2 ${color}`}>
-        {icon}
-      </div>
-      <div className="text-2xl font-black mb-1">{value}</div>
-      <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{label}</div>
-    </div>
-  );
-}

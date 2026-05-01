@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     const resetUrl = `${baseUrl}/reset-password/${token}`;
     await sendPasswordResetEmail({ to: email, resetUrl });
 
-    const meta = getRequestMeta();
+    const meta = await getRequestMeta();
     await auditLog({
       action: "auth.forgot_password",
       userId: user.id,

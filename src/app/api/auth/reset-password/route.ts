@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
     await prisma.verificationToken.delete({ where: { token } });
 
-    const meta = getRequestMeta();
+    const meta = await getRequestMeta();
     await auditLog({
       action: "auth.reset_password",
       userId: user.id,
