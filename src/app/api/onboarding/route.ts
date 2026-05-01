@@ -1,24 +1,25 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
 import prisma from "@/lib/prisma";
-import jwt from "jsonwebtoken";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const JWT_SECRET = process.env.JWT_SECRET || "fallback_secret";
 
 export async function POST(req: Request) {
   try {
-    const authHeader = req.headers.get("authorization");
-    const token = authHeader?.split(" ")[1];
+    const session = await getServerSession(authOptions);
     
-    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
     
-    const decoded: any = jwt.verify(token, JWT_SECRET);
+    const userId = (session.user as any).id;
     const { goal, level, frequency, restrictions, equipment, preferences } = await req.json();
 
     // Atualiza o usuário com os dados do onboarding
     await prisma.user.update({
-      where: { id: decoded.id },
+      where: { id: userId },
       data: {
         goal,
         level,
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
 
     const prompt = `
       Você é um personal trainer profissional e nutricionista esportivo.
-      Seu objetivo é criar um plano completo personalizado baseado nas informações do usuário.
+      Seu objetivo é criar um plano completo personalizado baseado nas informações do usuário brasileiro.
 
       Considere:
       - Objetivo: ${goal}
@@ -71,7 +72,6 @@ export async function POST(req: Request) {
 
     let plan;
     
-    // Se a chave da API não estiver configurada, retornamos um mock para não quebrar o desenvolvimento
     if (!OPENAI_API_KEY || OPENAI_API_KEY === "your_openai_api_key_here") {
       console.warn("OpenAI API Key not configured. Returning mock data.");
       plan = {
@@ -93,7 +93,7 @@ export async function POST(req: Request) {
       const response = await axios.post(
         "https://api.openai.com/v1/chat/completions",
         {
-          model: "gpt-4-turbo",
+          model: "gpt-4o",
           messages: [{ role: "user", content: prompt }],
           response_format: { type: "json_object" }
         },
@@ -110,7 +110,7 @@ export async function POST(req: Request) {
     // Salva o plano no banco de dados
     await prisma.workout.create({
       data: {
-        userId: decoded.id,
+        userId: userId,
         data: plan,
       }
     });
@@ -118,6 +118,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ plan });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Failed to generate plan" }, { status: 500 });
+    return NextResponse.json({ error: "Falha ao gerar plano" }, { status: 500 });
   }
 }

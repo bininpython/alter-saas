@@ -7,24 +7,27 @@ import {
   Dumbbell, 
   Utensils, 
   TrendingUp, 
-  User, 
+  User as UserIcon, 
   Bell,
   Settings,
   LogOut,
   Shield,
   MessageSquare,
   CreditCard,
-  ChevronRight
+  ChevronRight,
+  Zap
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
+import { cn } from "@/lib/utils";
 
 export default function ProfilePage() {
+  const { data: session } = useSession();
   const router = useRouter();
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    router.push("/");
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: "/" });
   };
 
   const MENU_ITEMS = [
@@ -39,8 +42,8 @@ export default function ProfilePage() {
       {/* Header */}
       <header className="flex justify-between items-center p-6 bg-white border-b border-slate-100 sticky top-0 z-20">
         <div className="flex items-center gap-2">
-           <User className="w-6 h-6 text-primary" />
-           <span className="text-2xl font-black italic uppercase tracking-tighter text-primary">Perfil</span>
+           <Zap className="w-6 h-6 text-primary fill-primary" />
+           <span className="text-2xl font-black italic uppercase tracking-tighter text-primary">Alter</span>
         </div>
         <Bell className="w-6 h-6 text-slate-400" />
       </header>
@@ -48,11 +51,11 @@ export default function ProfilePage() {
       <main className="p-6 space-y-6 max-w-lg mx-auto">
         {/* Profile Info Card */}
         <section className="bg-gradient-to-br from-primary to-purple-700 p-8 rounded-[32px] text-white text-center">
-          <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl font-black backdrop-blur-sm">
-            JD
+          <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl font-black backdrop-blur-sm uppercase">
+            {session?.user?.name?.[0] || "U"}
           </div>
-          <h2 className="text-2xl font-black mb-1">João da Silva</h2>
-          <p className="text-white/70 font-medium">joao@exemplo.com</p>
+          <h2 className="text-2xl font-black mb-1">{session?.user?.name || "Usuário Alter"}</h2>
+          <p className="text-white/70 font-medium">{session?.user?.email}</p>
           <div className="mt-4 inline-flex bg-white/10 px-4 py-2 rounded-full text-sm font-black backdrop-blur-sm">
             Plano Premium
           </div>
@@ -89,27 +92,27 @@ export default function ProfilePage() {
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 flex justify-around p-4 z-50">
-        <Link href="/dashboard" className="flex flex-col items-center gap-1 min-w-[64px] text-slate-400">
-          <div className="p-2 rounded-xl"><Home className="w-6 h-6" /></div>
-          <span className="text-[10px] font-black uppercase tracking-widest">Home</span>
-        </Link>
-        <Link href="/training" className="flex flex-col items-center gap-1 min-w-[64px] text-slate-400">
-          <div className="p-2 rounded-xl"><Dumbbell className="w-6 h-6" /></div>
-          <span className="text-[10px] font-black uppercase tracking-widest">Treino</span>
-        </Link>
-        <Link href="/nutrition" className="flex flex-col items-center gap-1 min-w-[64px] text-slate-400">
-          <div className="p-2 rounded-xl"><Utensils className="w-6 h-6" /></div>
-          <span className="text-[10px] font-black uppercase tracking-widest">Nutrição</span>
-        </Link>
-        <Link href="/progress" className="flex flex-col items-center gap-1 min-w-[64px] text-slate-400">
-          <div className="p-2 rounded-xl"><TrendingUp className="w-6 h-6" /></div>
-          <span className="text-[10px] font-black uppercase tracking-widest">Progresso</span>
-        </Link>
-        <Link href="/profile" className="flex flex-col items-center gap-1 min-w-[64px] text-primary">
-          <div className="p-2 rounded-xl bg-primary/5"><User className="w-6 h-6" /></div>
-          <span className="text-[10px] font-black uppercase tracking-widest">Perfil</span>
-        </Link>
+        <Link href="/dashboard"><NavBtn icon={<Home className="w-6 h-6" />} label="Home" /></Link>
+        <Link href="/training"><NavBtn icon={<Dumbbell className="w-6 h-6" />} label="Training" /></Link>
+        <Link href="/nutrition"><NavBtn icon={<Utensils className="w-6 h-6" />} label="Nutrition" /></Link>
+        <Link href="/progress"><NavBtn icon={<TrendingUp className="w-6 h-6" />} label="Progress" /></Link>
+        <Link href="/profile"><NavBtn icon={<UserIcon className="w-6 h-6" />} label="Profile" active /></Link>
       </nav>
     </div>
   );
 }
+
+function NavBtn({ icon, label, active = false }: any) {
+  return (
+    <div className={cn(
+      "flex flex-col items-center gap-1 min-w-[64px] transition-colors cursor-pointer",
+      active ? "text-primary" : "text-slate-400"
+    )}>
+      <div className={cn("p-2 rounded-xl", active && "bg-primary/5")}>
+        {icon}
+      </div>
+      <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
+    </div>
+  );
+}
+

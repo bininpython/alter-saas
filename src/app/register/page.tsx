@@ -6,6 +6,7 @@ import { Zap, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { signIn } from "next-auth/react";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -19,11 +20,22 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post("/api/auth/register", { name, email, password, whatsapp });
-      localStorage.setItem("token", res.data.token);
-      router.push("/onboarding");
+      await axios.post("/api/auth/register", { name, email, password, whatsapp });
+      
+      const res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (res?.error) {
+        alert("Conta criada, mas erro ao entrar: " + res.error);
+        router.push("/login");
+      } else {
+        router.push("/onboarding");
+      }
     } catch (error: any) {
-      alert(error.response?.data?.error || "Error creating account");
+      alert(error.response?.data?.error || "Erro ao criar conta");
     } finally {
       setLoading(false);
     }
@@ -58,10 +70,10 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-4">Email Address</label>
+            <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-4">E-mail</label>
             <input
               type="email"
-              placeholder="athlete@alter.com"
+              placeholder="atleta@alter.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="input-premium"
@@ -81,7 +93,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-4">Password</label>
+            <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-4">Senha</label>
             <input
               type="password"
               placeholder="••••••••"

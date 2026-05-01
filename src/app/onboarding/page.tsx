@@ -21,7 +21,7 @@ const STEPS = [
   {
     id: "goal",
     title: "Qual seu objetivo?",
-    desc: "Elite performance begins with focus.",
+    desc: "A performance de elite começa com o foco.",
     options: [
       { id: "emagrecimento", label: "Emagrecimento", icon: <Target className="w-6 h-6" /> },
       { id: "hipertrofia", label: "Hipertrofia", icon: <Zap className="w-6 h-6" /> },
@@ -31,7 +31,7 @@ const STEPS = [
   {
     id: "level",
     title: "Nível de experiência?",
-    desc: "Adapting the challenge to your baseline.",
+    desc: "Adaptando o desafio ao seu ponto de partida.",
     options: [
       { id: "iniciante", label: "Iniciante", icon: <Clock className="w-6 h-6" /> },
       { id: "intermediario", label: "Intermediário", icon: <Dumbbell className="w-6 h-6" /> },
@@ -50,24 +50,22 @@ export default function Onboarding() {
   const router = useRouter();
 
   const handleSelect = (field: string, value: string) => {
-    setForm({ ...form, [field]: value });
+    const updatedForm = { ...form, [field]: value };
+    setForm(updatedForm);
     if (currentStep < STEPS.length - 1) {
       setTimeout(() => setCurrentStep(currentStep + 1), 400);
     } else {
-      handleSubmit();
+      handleSubmit(updatedForm);
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (formData: any) => {
     setLoading(true);
-    const token = localStorage.getItem("token");
     try {
-      await axios.post("/api/onboarding", form, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.post("/api/onboarding", formData);
       router.push("/dashboard");
     } catch (error) {
-      alert("Error generating your elite plan.");
+      alert("Erro ao gerar seu plano de elite.");
     } finally {
       setLoading(false);
     }
@@ -134,7 +132,7 @@ export default function Onboarding() {
              <div className="w-16 h-16 bg-primary rounded-full animate-ping flex items-center justify-center">
                 <Zap className="w-8 h-8 text-white fill-white" />
              </div>
-             <p className="mt-8 text-xl font-black uppercase tracking-widest text-primary italic">Analyzing Baseline...</p>
+             <p className="mt-8 text-xl font-black uppercase tracking-widest text-primary italic">Analisando Perfil...</p>
           </div>
         )}
 
@@ -144,7 +142,7 @@ export default function Onboarding() {
             className="mt-12 flex items-center gap-2 text-sm font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-colors italic"
           >
             <ChevronLeft className="w-4 h-4" />
-            Back
+            Voltar
           </button>
         )}
       </div>
