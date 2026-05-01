@@ -14,7 +14,7 @@ import {
   Droplets,
   Coffee,
   Apple,
-  Steak,
+  Beef,
   CheckCircle2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,7 @@ import Link from "next/link";
 
 const MEALS = [
   { id: 1, name: "Café da Manhã", icon: <Coffee className="w-6 h-6" />, time: "07:00", calories: 450, completed: true, items: ["Ovos mexidos", "Tapioca", "Café preto"] },
-  { id: 2, name: "Almoço", icon: <Steak className="w-6 h-6" />, time: "12:30", calories: 650, completed: false, items: ["Frango grelhado", "Arroz integral", "Feijão", "Legumes"] },
+  { id: 2, name: "Almoço", icon: <Beef className="w-6 h-6" />, time: "12:30", calories: 650, completed: false, items: ["Frango grelhado", "Arroz integral", "Feijão", "Legumes"] },
   { id: 3, name: "Lanche da Tarde", icon: <Apple className="w-6 h-6" />, time: "16:00", calories: 250, completed: false, items: ["Iogurte natural", "Frutas", "Granola"] },
   { id: 4, name: "Jantar", icon: <Utensils className="w-6 h-6" />, time: "19:30", calories: 500, completed: false, items: ["Peixe", "Batata doce", "Salada verde"] },
 ];
