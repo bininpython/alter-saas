@@ -26,6 +26,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import Link from "next/link";
+import ChatBot from "@/components/ChatBot";
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -228,6 +229,8 @@ export default function Dashboard() {
         <Link href="/progress"><NavBtn icon={<TrendingUp className="w-6 h-6" />} label="Progress" /></Link>
         <Link href="/profile"><NavBtn icon={<UserIcon className="w-6 h-6" />} label="Profile" /></Link>
       </nav>
+
+      <ChatBot />
     </div>
   );
 }
