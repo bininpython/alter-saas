@@ -1,11 +1,20 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
+export const runtime = "nodejs";
+
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(req: Request) {
   try {
     const { message, userData } = await req.json();
+
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json(
+        { error: "GEMINI_API_KEY não configurada" },
+        { status: 500 }
+      );
+    }
 
     if (!message) {
       return NextResponse.json({ error: "Mensagem não fornecida" }, { status: 400 });
