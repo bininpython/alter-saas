@@ -44,6 +44,7 @@ model User {
   whatsapp      String?
   goal          String?
   level         String?
+  role          String    @default("user")
   plan          String    @default("free")
   streak        Int       @default(0)
   totalWorkouts Int       @default(0)
@@ -53,6 +54,7 @@ model User {
   sessions      Session[]
   workouts      Workout[]
   checkins      Checkin[]
+  auditLogs     AuditLog[]
 }
 
 model VerificationToken {
@@ -77,5 +79,16 @@ model Checkin {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   weight    Float?
   measurements Json?
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  ip        String?
+  userAgent String?
+  metadata  Json?
   createdAt DateTime @default(now())
 }

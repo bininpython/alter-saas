@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
-import axios from "axios";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { generateFitnessPlan } from "@/lib/ai";
 
 export const runtime = "nodejs";
-
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 export async function POST(req: Request) {
   try {
@@ -17,9 +15,30 @@ export async function POST(req: Request) {
     }
     
     const userId = (session.user as any).id;
-    const { goal, level, frequency, restrictions, equipment, preferences } = await req.json();
+    const body = await req.json();
+    const { goal, level } = body;
 
-    // Atualiza o usuário com os dados do onboarding
+    // --- Lógica de Cache (Sugestão de Evolução) ---
+    // Busca o treino mais recente gerado nas últimas 24 horas para evitar gastos desnecessários
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const existingWorkout = await prisma.workout.findFirst({
+      where: {
+        userId: userId,
+        createdAt: { gte: oneDayAgo }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (existingWorkout) {
+      console.log("Retornando treino do cache (menos de 24h)");
+      return NextResponse.json({ 
+        plan: existingWorkout.data, 
+        cached: true,
+        message: "Plano recente recuperado com sucesso." 
+      });
+    }
+
+    // Atualiza o perfil do usuário com os dados atuais
     await prisma.user.update({
       where: { id: userId },
       data: {
@@ -29,87 +48,11 @@ export async function POST(req: Request) {
       }
     });
 
-    const prompt = `
-      Você é um personal trainer profissional e nutricionista esportivo.
-      Seu objetivo é criar um plano completo personalizado baseado nas informações do usuário brasileiro.
-
-      Considere:
-      - Objetivo: ${goal}
-      - Nível: ${level}
-      - Frequência semanal: ${frequency || 3}
-      - Limitações físicas ou lesões: ${restrictions || 'Nenhuma'}
-      - Equipamentos disponíveis: ${equipment || 'Nenhum'}
-      - Preferências alimentares: ${preferences || 'Nenhuma'}
-
-      Responda EXCLUSIVAMENTE em formato JSON com a seguinte estrutura:
-      {
-        "training": {
-          "split": "Nome da divisão",
-          "days": [
-            {
-              "day": "Dia da semana",
-              "focus": "Foco do dia",
-              "exercises": [
-                {"name": "Nome", "sets": "séries", "reps": "repetições", "rest": "descanso"}
-              ]
-            }
-          ],
-          "tips": "Dicas de progressão"
-        },
-        "nutrition": {
-          "breakfast": "...",
-          "lunch": "...",
-          "snack": "...",
-          "dinner": "...",
-          "tips": "Dicas adaptadas à realidade brasileira"
-        },
-        "motivation": "Mensagem motivacional de coach"
-      }
-
-      Regras:
-      - Seja claro e direto
-      - Priorize segurança física
-      - Use linguagem motivacional
-    `;
-
-    let plan;
+    // --- Geração com Gemini 1.5 Flash (Sugestão de Evolução) ---
+    // Mais rápido e barato que GPT-4o, mantendo alta qualidade para este caso de uso
+    const plan = await generateFitnessPlan(body);
     
-    if (!OPENAI_API_KEY || OPENAI_API_KEY === "your_openai_api_key_here") {
-      console.warn("OpenAI API Key not configured. Returning mock data.");
-      plan = {
-        training: {
-          split: "ABC",
-          days: [{ day: "Segunda", focus: "Peito e Tríceps", exercises: [{ name: "Supino Inclinado", sets: "4", reps: "12", rest: "60s" }] }],
-          tips: "Aumente o peso gradualmente a cada semana."
-        },
-        nutrition: {
-          breakfast: "Ovos mexidos com tapioca",
-          lunch: "Frango grelhado, arroz integral e feijão",
-          snack: "Iogurte natural com frutas",
-          dinner: "Peixe com legumes",
-          tips: "Beba 3L de água por dia."
-        },
-        motivation: "O segredo do sucesso é a constância. Vamos pra cima!"
-      };
-    } else {
-      const response = await axios.post(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          model: "gpt-4o",
-          messages: [{ role: "user", content: prompt }],
-          response_format: { type: "json_object" }
-        },
-        {
-          headers: {
-            "Authorization": `Bearer ${OPENAI_API_KEY}`,
-            "Content-Type": "application/json"
-          }
-        }
-      );
-      plan = JSON.parse(response.data.choices[0].message.content);
-    }
-    
-    // Salva o plano no banco de dados
+    // Salva o novo plano no banco de dados
     await prisma.workout.create({
       data: {
         userId: userId,
@@ -117,9 +60,16 @@ export async function POST(req: Request) {
       }
     });
 
-    return NextResponse.json({ plan });
+    return NextResponse.json({ 
+      plan, 
+      cached: false,
+      message: "Novo plano gerado com IA e salvo com sucesso." 
+    });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Falha ao gerar plano" }, { status: 500 });
+    console.error("Erro no onboarding API:", error);
+    return NextResponse.json({ 
+      error: "Falha ao processar plano",
+      details: error instanceof Error ? error.message : "Erro desconhecido"
+    }, { status: 500 });
   }
 }

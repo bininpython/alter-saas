@@ -35,8 +35,12 @@ export const authOptions: NextAuthOptions = {
           },
         });
 
-        if (!user || !user.password) {
+        if (!user) {
           throw new Error("Usuário não encontrado");
+        }
+
+        if (!user.password) {
+          throw new Error("Conta criada via Google. Use 'Entrar com Google' ou defina uma senha.");
         }
 
         const isPasswordCorrect = await bcrypt.compare(
@@ -52,14 +56,52 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
+  events: {
+    async signIn({ user }) {
+      try {
+        await prisma.auditLog.create({
+          data: { userId: user?.id, action: "auth.signin" },
+        });
+      } catch {}
+    },
+    async signOut({ token }) {
+      try {
+        await prisma.auditLog.create({
+          data: { userId: token?.sub || null, action: "auth.signout" },
+        });
+      } catch {}
+    },
+    async createUser({ user }) {
+      try {
+        await prisma.auditLog.create({
+          data: { userId: user?.id, action: "auth.create_user" },
+        });
+      } catch {}
+    },
+    async linkAccount({ user, account }) {
+      try {
+        await prisma.auditLog.create({
+          data: {
+            userId: user?.id,
+            action: "auth.link_account",
+            metadata: { provider: account?.provider },
+          },
+        });
+      } catch {}
+    },
+  },
   callbacks: {
     async session({ session, token }) {
       if (token && session.user) {
         (session.user as any).id = token.sub;
+        (session.user as any).role = (token as any).role;
       }
       return session;
     },
     async jwt({ token, user }) {
+      if (user) {
+        (token as any).role = (user as any).role || "user";
+      }
       return token;
     },
   },

@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useEffect } from "react";
 import axios from "axios";
 
 const STEPS = [
@@ -41,6 +43,7 @@ const STEPS = [
 ];
 
 export default function Onboarding() {
+  const { data: session, status } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
   const [form, setForm] = useState<any>({
     goal: "",
@@ -48,6 +51,20 @@ export default function Onboarding() {
   });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login?callbackUrl=/onboarding");
+    }
+  }, [status, router]);
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   const handleSelect = (field: string, value: string) => {
     const updatedForm = { ...form, [field]: value };

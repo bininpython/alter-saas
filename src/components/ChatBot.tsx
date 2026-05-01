@@ -49,7 +49,6 @@ export default function ChatBot() {
     try {
       const res = await axios.post("/api/gemini/chat", {
         message: input,
-        userData: {},
       });
 
       const assistantMessage: Message = {
