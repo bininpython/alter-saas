@@ -16,6 +16,9 @@ export async function POST(req: Request) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    
+    console.log("Tentando criar usuário no banco...");
+    
     const user = await prisma.user.create({
       data: {
         name,
@@ -25,9 +28,14 @@ export async function POST(req: Request) {
       },
     });
 
+    console.log("Usuário criado com sucesso:", user.id);
+
     return NextResponse.json({ user: { id: user.id, name, email } });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
+  } catch (error: any) {
+    console.error("Erro no registro:", error);
+    return NextResponse.json({ 
+      error: "Erro interno do servidor", 
+      details: error.message 
+    }, { status: 500 });
   }
 }

@@ -63,4 +63,5 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
   },
+  debug: process.env.NODE_ENV === "development",
 };

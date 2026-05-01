@@ -35,7 +35,10 @@ export default function RegisterPage() {
         router.push("/onboarding");
       }
     } catch (error: any) {
-      alert(error.response?.data?.error || "Erro ao criar conta");
+      const errorMsg = error.response?.data?.details 
+        ? `${error.response.data.error}: ${error.response.data.details}`
+        : (error.response?.data?.error || "Erro ao criar conta");
+      alert(errorMsg);
     } finally {
       setLoading(false);
     }
