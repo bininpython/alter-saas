@@ -16,10 +16,9 @@ export async function POST(req: Request) {
     
     const userId = (session.user as any).id;
     const body = await req.json();
-    const { goal, level } = body;
+    const { gender, goal, level, weight, height, age, frequency, name } = body;
 
-    // --- Lógica de Cache (Sugestão de Evolução) ---
-    // Busca o treino mais recente gerado nas últimas 24 horas para evitar gastos desnecessários
+    // Busca treino recente para cache (últimas 24h)
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const existingWorkout = await prisma.workout.findFirst({
       where: {
@@ -31,6 +30,11 @@ export async function POST(req: Request) {
 
     if (existingWorkout) {
       console.log("Retornando treino do cache (menos de 24h)");
+      // Still update user data
+      await prisma.user.update({
+        where: { id: userId },
+        data: { gender, goal, level, onboardingCompleted: true }
+      });
       return NextResponse.json({ 
         plan: existingWorkout.data, 
         cached: true,
@@ -38,21 +42,30 @@ export async function POST(req: Request) {
       });
     }
 
-    // Atualiza o perfil do usuário com os dados atuais
+    // Atualiza o perfil do usuário
     await prisma.user.update({
       where: { id: userId },
       data: {
+        gender,
         goal,
         level,
         onboardingCompleted: true,
       }
     });
 
-    // --- Geração com Gemini 1.5 Flash (Sugestão de Evolução) ---
-    // Mais rápido e barato que GPT-4o, mantendo alta qualidade para este caso de uso
-    const plan = await generateFitnessPlan(body);
+    // Geração com DeepSeek AI via OpenRouter
+    const plan = await generateFitnessPlan({
+      name: name || session.user.name || "Atleta",
+      gender,
+      goal,
+      level,
+      weight: weight || undefined,
+      height: height || undefined,
+      age: age || undefined,
+      frequency: frequency || 3,
+    });
     
-    // Salva o novo plano no banco de dados
+    // Salva o novo plano no banco
     await prisma.workout.create({
       data: {
         userId: userId,
@@ -63,7 +76,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ 
       plan, 
       cached: false,
-      message: "Novo plano gerado com IA e salvo com sucesso." 
+      message: "Novo plano gerado com DeepSeek AI e salvo com sucesso." 
     });
   } catch (error) {
     console.error("Erro no onboarding API:", error);

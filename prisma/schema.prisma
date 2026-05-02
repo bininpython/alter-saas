@@ -44,6 +44,7 @@ model User {
   whatsapp      String?
   goal          String?
   level         String?
+  gender        String?
   role          String    @default("user")
   plan          String    @default("free")
   streak        Int       @default(0)

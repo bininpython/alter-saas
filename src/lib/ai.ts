@@ -1,20 +1,61 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+// DeepSeek AI via OpenRouter - Personal Trainer AI Engine
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const DEEPSEEK_MODEL = "deepseek/deepseek-chat-v3-0324";
 
-// Dados de fallback completos para quando a API do Gemini não está disponível
+interface OpenRouterMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+async function callDeepSeek(messages: OpenRouterMessage[], jsonMode = false): Promise<string> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    throw new Error("OPENROUTER_API_KEY não configurada");
+  }
+
+  const body: any = {
+    model: DEEPSEEK_MODEL,
+    messages,
+    temperature: 0.7,
+    max_tokens: 4000,
+  };
+
+  if (jsonMode) {
+    body.response_format = { type: "json_object" };
+  }
+
+  const res = await fetch(OPENROUTER_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+      "HTTP-Referer": "https://alter-fitness.com",
+      "X-Title": "Alter Personal Trainer AI",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    console.error("OpenRouter API Error:", res.status, err);
+    throw new Error(`OpenRouter API Error: ${res.status}`);
+  }
+
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || "";
+}
+
+// Dados de fallback para quando a API não está disponível
 function getFallbackPlan(userData: any) {
   const goal = userData.goal || "hipertrofia";
-  const level = userData.level || "iniciante";
-
   const plans: Record<string, any> = {
     emagrecimento: {
       training: {
         split: "Full Body - Queima",
         days: [
           {
-            day: "Segunda-feira",
-            focus: "Full Body A",
+            day: "Segunda-feira", focus: "Full Body A",
             exercises: [
               { name: "Agachamento Livre", sets: "4", reps: "15", rest: "45s" },
               { name: "Supino Reto", sets: "3", reps: "12", rest: "60s" },
@@ -25,8 +66,7 @@ function getFallbackPlan(userData: any) {
             ]
           },
           {
-            day: "Quarta-feira",
-            focus: "Full Body B",
+            day: "Quarta-feira", focus: "Full Body B",
             exercises: [
               { name: "Leg Press 45°", sets: "4", reps: "15", rest: "45s" },
               { name: "Puxada Frontal", sets: "3", reps: "12", rest: "60s" },
@@ -37,8 +77,7 @@ function getFallbackPlan(userData: any) {
             ]
           },
           {
-            day: "Sexta-feira",
-            focus: "Full Body C",
+            day: "Sexta-feira", focus: "Full Body C",
             exercises: [
               { name: "Stiff", sets: "4", reps: "12", rest: "60s" },
               { name: "Supino Inclinado", sets: "3", reps: "12", rest: "60s" },
@@ -49,24 +88,27 @@ function getFallbackPlan(userData: any) {
             ]
           }
         ],
-        tips: "Mantenha a intensidade alta com intervalos curtos. Foque na contração muscular e na postura. Combine com aeróbico no final de cada sessão para maximizar a queima calórica."
+        tips: "Mantenha a intensidade alta com intervalos curtos. Foque na contração muscular e na postura."
       },
       nutrition: {
-        breakfast: "2 ovos mexidos + 1 fatia de pão integral + 1 fruta (banana ou maçã) + café sem açúcar",
-        lunch: "150g frango grelhado + arroz integral (4 colheres) + salada verde à vontade + azeite de oliva",
-        snack: "1 iogurte natural + 2 colheres de aveia + morangos picados",
+        calories: "1800 kcal",
+        protein: "130g",
+        carbs: "180g",
+        fat: "55g",
+        breakfast: "2 ovos mexidos + 1 fatia de pão integral + 1 fruta + café sem açúcar",
+        lunch: "150g frango grelhado + arroz integral (4 colheres) + salada verde + azeite",
+        snack: "1 iogurte natural + 2 colheres de aveia + morangos",
         dinner: "Omelete de 3 claras e 1 gema + legumes salteados + chá verde",
-        tips: "Beba no mínimo 3 litros de água por dia. Evite açúcar refinado e ultraprocessados. Proteína em todas as refeições para preservar massa muscular."
+        tips: "Beba 3L de água/dia. Evite açúcar refinado e ultraprocessados."
       },
-      motivation: "Cada gota de suor te aproxima do corpo que você merece. O processo dói, mas o resultado vale a pena! 🔥"
+      motivation: "Cada gota de suor te aproxima do corpo que você merece. 🔥"
     },
     hipertrofia: {
       training: {
         split: "ABC - Hipertrofia",
         days: [
           {
-            day: "Segunda-feira",
-            focus: "Peito, Ombro e Tríceps",
+            day: "Segunda-feira", focus: "Peito, Ombro e Tríceps",
             exercises: [
               { name: "Supino Reto com Barra", sets: "4", reps: "10", rest: "90s" },
               { name: "Supino Inclinado Halteres", sets: "3", reps: "12", rest: "60s" },
@@ -77,8 +119,7 @@ function getFallbackPlan(userData: any) {
             ]
           },
           {
-            day: "Quarta-feira",
-            focus: "Costas e Bíceps",
+            day: "Quarta-feira", focus: "Costas e Bíceps",
             exercises: [
               { name: "Barra Fixa", sets: "4", reps: "8", rest: "90s" },
               { name: "Remada Curvada", sets: "4", reps: "10", rest: "60s" },
@@ -89,8 +130,7 @@ function getFallbackPlan(userData: any) {
             ]
           },
           {
-            day: "Sexta-feira",
-            focus: "Pernas e Abdômen",
+            day: "Sexta-feira", focus: "Pernas e Abdômen",
             exercises: [
               { name: "Agachamento Livre", sets: "4", reps: "10", rest: "120s" },
               { name: "Leg Press 45°", sets: "4", reps: "12", rest: "90s" },
@@ -101,24 +141,27 @@ function getFallbackPlan(userData: any) {
             ]
           }
         ],
-        tips: "Progressão de carga semanal: aumente 2-5% quando completar todas as séries com boa forma. Descanse 48h entre treinos do mesmo grupo muscular."
+        tips: "Progressão de carga semanal: aumente 2-5% quando completar todas as séries com boa forma."
       },
       nutrition: {
-        breakfast: "3 ovos inteiros + 2 fatias pão integral + pasta de amendoim + banana + whey shake",
-        lunch: "200g frango ou carne vermelha magra + arroz branco (6 colheres) + feijão + salada",
+        calories: "2800 kcal",
+        protein: "180g",
+        carbs: "320g",
+        fat: "85g",
+        breakfast: "3 ovos + 2 fatias pão integral + pasta de amendoim + banana + whey",
+        lunch: "200g frango ou carne + arroz branco (6 colheres) + feijão + salada",
         snack: "Batata doce (200g) + frango desfiado (100g) + suco natural",
-        dinner: "200g peixe (tilápia ou salmão) + macarrão integral + legumes refogados",
-        tips: "Consuma 2g de proteína por kg corporal. Não pule refeições. Considere suplementar com creatina (5g/dia) e whey protein pós-treino."
+        dinner: "200g peixe + macarrão integral + legumes refogados",
+        tips: "Consuma 2g de proteína por kg corporal. Considere creatina (5g/dia) e whey pós-treino."
       },
-      motivation: "Músculos não são construídos no conforto. Cada série pesada é um tijolo na construção do seu melhor eu! 💪"
+      motivation: "Cada série pesada é um tijolo na construção do seu melhor eu! 💪"
     },
     condicionamento: {
       training: {
         split: "Circuito - Resistência",
         days: [
           {
-            day: "Segunda-feira",
-            focus: "Circuito Upper Body",
+            day: "Segunda-feira", focus: "Circuito Upper Body",
             exercises: [
               { name: "Flexão de Braço", sets: "3", reps: "15", rest: "30s" },
               { name: "Remada com Halteres", sets: "3", reps: "15", rest: "30s" },
@@ -129,8 +172,7 @@ function getFallbackPlan(userData: any) {
             ]
           },
           {
-            day: "Quarta-feira",
-            focus: "Circuito Lower Body",
+            day: "Quarta-feira", focus: "Circuito Lower Body",
             exercises: [
               { name: "Agachamento com Salto", sets: "3", reps: "12", rest: "30s" },
               { name: "Afundo Alternado", sets: "3", reps: "20", rest: "30s" },
@@ -141,8 +183,7 @@ function getFallbackPlan(userData: any) {
             ]
           },
           {
-            day: "Sexta-feira",
-            focus: "Full Body Funcional",
+            day: "Sexta-feira", focus: "Full Body Funcional",
             exercises: [
               { name: "Kettlebell Swing", sets: "4", reps: "15", rest: "30s" },
               { name: "Turkish Get Up", sets: "3", reps: "5 cada", rest: "45s" },
@@ -153,87 +194,245 @@ function getFallbackPlan(userData: any) {
             ]
           }
         ],
-        tips: "Foque em manter o ritmo cardíaco elevado. Descanse o mínimo possível entre exercícios. A cada semana, tente reduzir os intervalos ou aumentar as repetições."
+        tips: "Foque em manter o ritmo cardíaco elevado. Reduza intervalos ou aumente reps semanalmente."
       },
       nutrition: {
-        breakfast: "Açaí com granola e banana + 2 ovos cozidos + suco de laranja natural",
-        lunch: "Frango grelhado + quinoa + legumes variados + azeite de oliva",
+        calories: "2200 kcal",
+        protein: "140g",
+        carbs: "260g",
+        fat: "70g",
+        breakfast: "Açaí com granola e banana + 2 ovos cozidos + suco natural",
+        lunch: "Frango grelhado + quinoa + legumes variados + azeite",
         snack: "Mix de castanhas + fruta + iogurte grego",
         dinner: "Sopa de legumes com frango desfiado + torrada integral",
-        tips: "Carboidratos são combustível! Não os elimine. Hidrate-se constantemente durante e após o treino. Considere bebida isotônica em treinos acima de 1h."
+        tips: "Carboidratos são combustível! Hidrate-se constantemente durante o treino."
       },
-      motivation: "Resistência se constrói na persistência. Cada treino é uma prova de que você pode ir além dos seus limites! ⚡"
+      motivation: "Resistência se constrói na persistência. Vá além dos seus limites! ⚡"
     }
   };
-
   return plans[goal] || plans.hipertrofia;
 }
 
 export async function generateFitnessPlan(userData: any) {
-  const model = genAI.getGenerativeModel({ 
-    model: "gemini-2.0-flash",
-    generationConfig: {
-      responseMimeType: "application/json",
-    }
-  });
+  const prompt = `Você é um personal trainer profissional e nutricionista esportivo brasileiro.
+Crie um plano completo personalizado para o usuário.
 
-  const prompt = `
-    Você é um personal trainer profissional e nutricionista esportivo especializado no mercado brasileiro.
-    Seu objetivo é criar um plano completo personalizado baseado nas informações do usuário.
+Dados do Usuário:
+- Nome: ${userData.name || "Atleta"}
+- Sexo: ${userData.gender || "Não informado"}
+- Objetivo: ${userData.goal}
+- Nível: ${userData.level}
+- Peso atual: ${userData.weight || "Não informado"}kg
+- Altura: ${userData.height || "Não informado"}m
+- Idade: ${userData.age || "Não informada"}
+- Frequência semanal: ${userData.frequency || 3} dias
+- Limitações: ${userData.restrictions || "Nenhuma"}
+- Equipamentos: ${userData.equipment || "Academia completa"}
+- Preferências alimentares: ${userData.preferences || "Nenhuma"}
 
-    Dados do Usuário:
-    - Objetivo: ${userData.goal}
-    - Nível: ${userData.level}
-    - Frequência semanal: ${userData.frequency || 3} dias
-    - Limitações físicas: ${userData.restrictions || 'Nenhuma'}
-    - Equipamentos: ${userData.equipment || 'Nenhum'}
-    - Preferências alimentares: ${userData.preferences || 'Nenhuma'}
+Responda EXCLUSIVAMENTE em formato JSON com esta estrutura:
+{
+  "training": {
+    "split": "Nome da divisão",
+    "days": [
+      {
+        "day": "Dia da semana",
+        "focus": "Foco do dia",
+        "exercises": [
+          {"name": "Exercício", "sets": "4", "reps": "12", "rest": "60s"}
+        ]
+      }
+    ],
+    "tips": "Dicas de treino"
+  },
+  "nutrition": {
+    "calories": "2200 kcal",
+    "protein": "160g",
+    "carbs": "240g",
+    "fat": "70g",
+    "breakfast": "Sugestão café da manhã detalhada",
+    "lunch": "Sugestão almoço detalhada",
+    "snack": "Sugestão lanche detalhada",
+    "dinner": "Sugestão jantar detalhada",
+    "tips": "Dicas nutricionais"
+  },
+  "motivation": "Frase motivacional"
+}
 
-    Responda EXCLUSIVAMENTE em formato JSON com a seguinte estrutura exata:
-    {
-      "training": {
-        "split": "Nome da divisão (Ex: ABC)",
-        "days": [
-          {
-            "day": "Dia da semana",
-            "focus": "Foco do dia",
-            "exercises": [
-              {"name": "Nome do exercício", "sets": "número", "reps": "repetições", "rest": "tempo"}
-            ]
-          }
-        ],
-        "tips": "Dicas de progressão e segurança"
-      },
-      "nutrition": {
-        "breakfast": "Sugestão café da manhã",
-        "lunch": "Sugestão almoço",
-        "snack": "Sugestão lanche",
-        "dinner": "Sugestão jantar",
-        "tips": "Dicas de hidratação e suplementação"
-      },
-      "motivation": "Frase motivacional curta e impactante"
-    }
+Use alimentos brasileiros. Adapte ao objetivo e nível. Seja detalhado nos exercícios.`;
 
-    Regras:
-    - Use linguagem motivacional e técnica.
-    - Adapte os alimentos à realidade brasileira.
-    - Garanta que os exercícios respeitem as limitações físicas mencionadas.
-  `;
-
-  if (!process.env.GEMINI_API_KEY) {
-    console.warn("GEMINI_API_KEY não configurada. Retornando dados de fallback.");
+  if (!process.env.OPENROUTER_API_KEY) {
+    console.warn("OPENROUTER_API_KEY não configurada. Usando fallback.");
     return getFallbackPlan(userData);
   }
 
   try {
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
-    return JSON.parse(text);
+    const response = await callDeepSeek([
+      { role: "system", content: "Você é um personal trainer AI brasileiro chamado Alter. Responda APENAS em JSON válido." },
+      { role: "user", content: prompt }
+    ], true);
+
+    return JSON.parse(response);
   } catch (error: any) {
-    console.error("Gemini API Error:", error?.message || error);
-    console.warn("Usando plano de fallback devido a erro na API do Gemini.");
-    // Retorna plano de fallback em vez de falhar
+    console.error("DeepSeek API Error:", error?.message || error);
     return getFallbackPlan(userData);
+  }
+}
+
+export async function chatWithPersonal(
+  message: string,
+  userContext: {
+    name?: string;
+    gender?: string;
+    goal?: string;
+    level?: string;
+    weight?: number;
+    height?: number;
+    age?: number;
+    streak?: number;
+    totalWorkouts?: number;
+  },
+  history: OpenRouterMessage[] = []
+): Promise<string> {
+  const systemPrompt = `Você é o ALTER, um Personal Trainer AI de elite. Você é energético, motivacional e técnico.
+
+PERFIL DO ALUNO:
+- Nome: ${userContext.name || "Atleta"}
+- Sexo: ${userContext.gender || "Não informado"}
+- Objetivo: ${userContext.goal || "Não definido"}
+- Nível: ${userContext.level || "Iniciante"}
+- Peso: ${userContext.weight ? userContext.weight + "kg" : "Não informado"}
+- Altura: ${userContext.height ? userContext.height + "m" : "Não informado"}
+- Idade: ${userContext.age || "Não informada"}
+- Streak: ${userContext.streak || 0} dias seguidos
+- Total treinos: ${userContext.totalWorkouts || 0}
+
+SUAS FUNÇÕES:
+1. PERSONAL TRAINER: Elabora treinos, corrige execuções, sugere progressões
+2. NUTRICIONISTA: Monta cardápios, calcula macros, sugere substituições
+3. MOTIVADOR: Acompanha progresso, celebra conquistas, mantém consistência
+4. CONSULTOR: Responde dúvidas sobre suplementação, descanso, recuperação
+
+COMPORTAMENTO:
+- Seja DIRETO e MOTIVACIONAL
+- Use linguagem informal brasileira com emojis (💪🔥⚡🏆)
+- Pergunte sobre o peso, medidas e como o aluno se sente
+- Sugira exercícios baseados no objetivo do aluno
+- Quando perguntarem sobre peso, elabore estratégias específicas
+- Se o aluno não tiver peso registrado, PERGUNTE
+- Máximo 3 parágrafos por resposta
+- Dê orientações práticas e aplicáveis
+- Quando falar de exercícios, sempre inclua séries x repetições
+- Encerre com uma pergunta ou desafio para engajar o aluno`;
+
+  const messages: OpenRouterMessage[] = [
+    { role: "system", content: systemPrompt },
+    ...history,
+    { role: "user", content: message }
+  ];
+
+  if (!process.env.OPENROUTER_API_KEY) {
+    return getFallbackChatResponse(message);
+  }
+
+  try {
+    return await callDeepSeek(messages);
+  } catch (error: any) {
+    console.error("Chat DeepSeek Error:", error?.message);
+    return getFallbackChatResponse(message);
+  }
+}
+
+function getFallbackChatResponse(message: string): string {
+  const lower = message.toLowerCase();
+  if (lower.includes("treino") || lower.includes("exerc")) {
+    return "Para o seu nível, recomendo 3 séries de 12 reps nos exercícios compostos (supino, agachamento, remada). Descanse 60-90s entre séries. Foque na execução! 💪 Qual grupo muscular quer trabalhar hoje?";
+  }
+  if (lower.includes("diet") || lower.includes("comer") || lower.includes("alimenta") || lower.includes("refeição")) {
+    return "Uma base sólida: café da manhã com ovos e tapioca, almoço com frango/peixe + arroz integral + salada, lanche com frutas + iogurte, jantar leve. Beba 2L+ de água! 🥗 Me conta seu objetivo que monto um cardápio!";
+  }
+  if (lower.includes("peso") || lower.includes("emagrec") || lower.includes("gord")) {
+    return "Para perder peso saudavelmente: combine treino de força + déficit calórico de 300-500 kcal. Priorize proteína (1.6-2g/kg). Não corte demais! 📉 Qual seu peso atual? Posso calcular suas necessidades!";
+  }
+  if (lower.includes("suplemento") || lower.includes("whey") || lower.includes("creatina")) {
+    return "Os essenciais: Whey Protein pós-treino (30g), Creatina (5g/dia todos os dias), e Vitamina D se necessário. Suplementos são complementos, não substitutos de uma boa alimentação! 💊 Já usa algum?";
+  }
+  return "Ótima pergunta! Como seu Personal AI, posso te ajudar com treinos, nutrição, suplementação e estratégias de performance. Me conta: qual seu objetivo principal agora? 🔥";
+}
+
+export async function generateWeeklyReport(userData: {
+  name?: string;
+  goal?: string;
+  level?: string;
+  weight?: number;
+  streak?: number;
+  totalWorkouts?: number;
+  weeklyWorkouts?: number;
+  checkins?: any[];
+}): Promise<any> {
+  const prompt = `Gere um relatório semanal de progresso fitness.
+
+Dados do aluno:
+- Nome: ${userData.name || "Atleta"}
+- Objetivo: ${userData.goal || "Hipertrofia"}
+- Nível: ${userData.level || "Iniciante"}
+- Peso atual: ${userData.weight || "Não informado"}kg
+- Streak atual: ${userData.streak || 0} dias
+- Treinos na semana: ${userData.weeklyWorkouts || 0}
+- Total de treinos: ${userData.totalWorkouts || 0}
+- Check-ins recentes: ${JSON.stringify(userData.checkins || [])}
+
+Responda em JSON:
+{
+  "summary": "Resumo da semana em 2 frases",
+  "score": 75,
+  "highlights": ["Conquista 1", "Conquista 2"],
+  "improvements": ["Melhoria 1", "Melhoria 2"],
+  "nextWeekTips": ["Dica 1", "Dica 2", "Dica 3"],
+  "motivationalMessage": "Mensagem motivacional personalizada",
+  "weeklyGoals": [
+    {"goal": "Meta 1", "type": "training"},
+    {"goal": "Meta 2", "type": "nutrition"},
+    {"goal": "Meta 3", "type": "habit"}
+  ]
+}`;
+
+  if (!process.env.OPENROUTER_API_KEY) {
+    return {
+      summary: `Semana de progresso! Você completou ${userData.weeklyWorkouts || 0} treinos.`,
+      score: Math.min(100, (userData.weeklyWorkouts || 0) * 20 + (userData.streak || 0) * 5),
+      highlights: ["Manteve a consistência!", "Completou seus treinos programados"],
+      improvements: ["Aumentar ingestão de água", "Dormir 8h por noite"],
+      nextWeekTips: ["Aumente a carga em 5%", "Adicione 1 dia de cardio", "Prepare marmitas no domingo"],
+      motivationalMessage: "Você está no caminho certo! Cada treino conta. Continue firme! 🔥",
+      weeklyGoals: [
+        { goal: "Completar 4 treinos", type: "training" },
+        { goal: "Beber 3L de água por dia", type: "nutrition" },
+        { goal: "Dormir antes das 23h", type: "habit" }
+      ]
+    };
+  }
+
+  try {
+    const response = await callDeepSeek([
+      { role: "system", content: "Você é o Alter, personal trainer AI. Gere relatórios motivacionais e técnicos. Responda APENAS em JSON." },
+      { role: "user", content: prompt }
+    ], true);
+    return JSON.parse(response);
+  } catch (error: any) {
+    console.error("Weekly Report Error:", error?.message);
+    return {
+      summary: `Continue firme! Você tem ${userData.streak || 0} dias de streak.`,
+      score: 60,
+      highlights: ["Você está ativo na plataforma!"],
+      improvements: ["Manter a consistência nos treinos"],
+      nextWeekTips: ["Foque em exercícios compostos", "Hidratação é fundamental"],
+      motivationalMessage: "O progresso é lento mas constante. Não desista! 💪",
+      weeklyGoals: [
+        { goal: "Treinar 3x na semana", type: "training" },
+        { goal: "Comer proteína em todas refeições", type: "nutrition" },
+        { goal: "Registrar peso diariamente", type: "habit" }
+      ]
+    };
   }
 }

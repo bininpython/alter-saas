@@ -6,7 +6,6 @@ import { chatWithPersonal } from "@/lib/ai";
 
 export const runtime = "nodejs";
 
-// Legacy endpoint - redirects to new /api/ai/chat
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -18,6 +17,7 @@ export async function POST(req: Request) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
+        id: true,
         name: true,
         gender: true,
         goal: true,
@@ -27,11 +27,17 @@ export async function POST(req: Request) {
       },
     });
 
-    const { message } = await req.json();
+    const { message, history } = await req.json();
 
     if (!message) {
       return NextResponse.json({ error: "Mensagem não fornecida" }, { status: 400 });
     }
+
+    // Buscar último check-in para peso
+    const lastCheckin = await prisma.checkin.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+    });
 
     const response = await chatWithPersonal(
       message,
@@ -40,9 +46,11 @@ export async function POST(req: Request) {
         gender: user?.gender || undefined,
         goal: user?.goal || undefined,
         level: user?.level || undefined,
+        weight: lastCheckin?.weight || undefined,
         streak: user?.streak || 0,
         totalWorkouts: user?.totalWorkouts || 0,
-      }
+      },
+      history || []
     );
 
     return NextResponse.json({ response });

@@ -1,24 +1,28 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { 
-  Home, 
-  Dumbbell, 
-  Utensils, 
-  TrendingUp, 
-  User as UserIcon, 
-  Bell, 
-  Flame,
+import {
+  Home,
+  Dumbbell,
+  Utensils,
+  TrendingUp,
+  User as UserIcon,
+  Bell,
   Play,
   ChevronRight,
+  Zap,
+  Target,
   Trophy,
-  Zap
+  Flame,
+  BarChart3,
+  Sparkles,
+  CheckCircle2,
+  Scale
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { 
-  BarChart, 
-  Bar, 
+import {
+  BarChart,
+  Bar,
   ResponsiveContainer,
   Cell
 } from "recharts";
@@ -32,7 +36,9 @@ export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [userData, setUserData] = useState<any>(null);
+  const [weeklyReport, setWeeklyReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [reportLoading, setReportLoading] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -49,10 +55,24 @@ export default function Dashboard() {
         router.push("/onboarding");
       }
       setUserData(res.data);
+      // Fetch weekly report in background
+      fetchWeeklyReport();
     } catch (error) {
       console.error("Erro ao carregar dados", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchWeeklyReport = async () => {
+    setReportLoading(true);
+    try {
+      const res = await axios.get("/api/ai/weekly-report");
+      setWeeklyReport(res.data.report);
+    } catch (error) {
+      console.error("Erro ao carregar relatório semanal", error);
+    } finally {
+      setReportLoading(false);
     }
   };
 
@@ -64,17 +84,25 @@ export default function Dashboard() {
     );
   }
 
-  const MOCK_WEIGHT = [
-    { date: "Seg", weight: 80 },
-    { date: "Ter", weight: 79.5 },
-    { date: "Qua", weight: 79 },
-    { date: "Qui", weight: 78.8 },
-    { date: "Sex", weight: 78.6 },
-    { date: "Sab", weight: 78.4 },
-  ];
+  const WEIGHT_DATA = userData?.recentCheckins?.length > 0
+    ? userData.recentCheckins.map((c: any) => ({
+        date: new Date(c.createdAt).toLocaleDateString("pt-BR", { weekday: "short" }),
+        weight: c.weight
+      })).reverse()
+    : [
+        { date: "Seg", weight: 80 },
+        { date: "Ter", weight: 79.5 },
+        { date: "Qua", weight: 79 },
+        { date: "Qui", weight: 78.8 },
+        { date: "Sex", weight: 78.6 },
+        { date: "Sab", weight: 78.4 },
+      ];
 
   const trainingPlan = userData?.lastWorkout?.training;
   const nutritionPlan = userData?.lastWorkout?.nutrition;
+  const currentWeight = WEIGHT_DATA[WEIGHT_DATA.length - 1]?.weight;
+  const firstWeight = WEIGHT_DATA[0]?.weight;
+  const weightChange = currentWeight && firstWeight ? (currentWeight - firstWeight).toFixed(1) : null;
 
   return (
     <div className="min-h-screen bg-[#f7f9fb] pb-24 text-[#191c1e]">
@@ -90,7 +118,7 @@ export default function Dashboard() {
         </button>
       </header>
 
-      <main className="p-6 space-y-8 max-w-lg mx-auto">
+      <main className="p-6 space-y-6 max-w-lg mx-auto">
         {/* Welcome Section */}
         <section className="flex justify-between items-start">
           <div>
@@ -111,51 +139,94 @@ export default function Dashboard() {
           </button>
         </Link>
 
-        {/* Daily Goal */}
-        <section className="space-y-4">
-          <div className="flex justify-between items-end">
-            <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Plano Atual</h3>
-            <span className="text-primary font-black uppercase text-xs">{userData?.user?.goal || "Não definido"}</span>
+        {/* Stats Grid */}
+        <section className="grid grid-cols-3 gap-3">
+          <div className="bg-white p-4 rounded-[20px] border border-slate-100 text-center">
+            <div className="bg-primary/10 w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-2">
+              <Dumbbell className="w-5 h-5 text-primary" />
+            </div>
+            <span className="text-xl font-black block">{userData?.user?.totalWorkouts || 0}</span>
+            <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Treinos</span>
           </div>
-          <div className="h-4 bg-slate-100 rounded-full overflow-hidden">
-            <div className="h-full bg-primary w-1/4 rounded-full"></div>
+          <div className="bg-white p-4 rounded-[20px] border border-slate-100 text-center">
+            <div className="bg-emerald-50 w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-2">
+              <Scale className="w-5 h-5 text-emerald-500" />
+            </div>
+            <span className="text-xl font-black block">{currentWeight || "--"}kg</span>
+            <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Peso</span>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-             <div className="bg-white p-4 rounded-[24px] border border-slate-100">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Nível</span>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-xl font-black uppercase text-primary">{userData?.user?.level || "..."}</span>
-                </div>
-             </div>
-             <div className="bg-white p-4 rounded-[24px] border border-slate-100">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Treinos</span>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-black">{userData?.user?.totalWorkouts || 0}</span>
-                </div>
-             </div>
+          <div className="bg-white p-4 rounded-[20px] border border-slate-100 text-center">
+            <div className="bg-amber-50 w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-2">
+              <Target className="w-5 h-5 text-amber-500" />
+            </div>
+            <span className="text-sm font-black block uppercase text-primary">{userData?.user?.goal || "..."}</span>
+            <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Objetivo</span>
           </div>
         </section>
 
+        {/* AI Weekly Report */}
+        {weeklyReport && (
+          <section className="bg-gradient-to-br from-violet-600 to-purple-700 p-6 rounded-[28px] text-white space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-300" />
+                <h3 className="text-xs font-black uppercase tracking-widest text-white/80">Relatório Semanal AI</h3>
+              </div>
+              <div className="bg-white/20 px-3 py-1 rounded-full">
+                <span className="text-lg font-black">{weeklyReport.score || 0}%</span>
+              </div>
+            </div>
+
+            <p className="text-sm font-medium text-white/90 leading-relaxed">{weeklyReport.summary}</p>
+
+            {/* Weekly Goals */}
+            {weeklyReport.weeklyGoals && (
+              <div className="space-y-2">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-white/60">Metas da Semana</h4>
+                {weeklyReport.weeklyGoals.map((g: any, i: number) => (
+                  <div key={i} className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-xl">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
+                    <span className="text-xs font-bold text-white/90">{g.goal}</span>
+                    <span className="ml-auto text-[10px] font-bold text-white/50 uppercase">{g.type}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Motivational */}
+            <p className="text-sm font-black italic text-amber-200/80 pt-2 border-t border-white/10">
+              "{weeklyReport.motivationalMessage}"
+            </p>
+          </section>
+        )}
+
+        {reportLoading && !weeklyReport && (
+          <section className="bg-gradient-to-br from-violet-600 to-purple-700 p-6 rounded-[28px] text-white text-center">
+            <Sparkles className="w-6 h-6 text-amber-300 mx-auto mb-2 animate-pulse" />
+            <p className="text-sm font-bold text-white/70">Gerando relatório semanal com IA...</p>
+          </section>
+        )}
+
         {/* Workout Preview */}
         {trainingPlan && (
-          <section className="space-y-4">
-            <h2 className="text-2xl font-black">Treino de Hoje</h2>
-            <div className="bg-white p-6 rounded-[32px] border border-slate-100 space-y-4">
+          <section className="space-y-3">
+            <h2 className="text-xl font-black">Treino de Hoje</h2>
+            <div className="bg-white p-5 rounded-[28px] border border-slate-100 space-y-3">
               <div className="flex justify-between items-center">
-                <h3 className="font-black text-lg text-primary">{trainingPlan.split}</h3>
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{trainingPlan.days[0]?.day}</span>
+                <h3 className="font-black text-primary">{trainingPlan.split}</h3>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{trainingPlan.days[0]?.day}</span>
               </div>
               <p className="text-sm font-medium text-slate-500">Foco: {trainingPlan.days[0]?.focus}</p>
               <div className="space-y-2">
-                {trainingPlan.days[0]?.exercises.slice(0, 3).map((ex: any, i: number) => (
-                  <div key={i} className="flex justify-between text-xs font-bold">
+                {trainingPlan.days[0]?.exercises.slice(0, 4).map((ex: any, i: number) => (
+                  <div key={i} className="flex justify-between text-xs font-bold py-1">
                     <span>{ex.name}</span>
                     <span className="text-primary">{ex.sets}x{ex.reps}</span>
                   </div>
                 ))}
               </div>
               <Link href="/training">
-                <button className="w-full py-3 mt-2 text-xs font-black uppercase tracking-widest border-2 border-slate-100 rounded-2xl hover:bg-slate-50 transition-colors">
+                <button className="w-full py-3 mt-1 text-xs font-black uppercase tracking-widest border-2 border-slate-100 rounded-2xl hover:bg-slate-50 transition-colors">
                   Ver Treino Completo
                 </button>
               </Link>
@@ -165,16 +236,36 @@ export default function Dashboard() {
 
         {/* Nutrition Preview */}
         {nutritionPlan && (
-          <section className="space-y-4">
-            <h2 className="text-2xl font-black">Nutrição</h2>
-            <div className="bg-[#191c1e] p-8 rounded-[32px] text-white space-y-4">
+          <section className="space-y-3">
+            <h2 className="text-xl font-black">Nutrição</h2>
+            <div className="bg-[#191c1e] p-6 rounded-[28px] text-white space-y-3">
               <div className="flex items-center gap-3">
-                <Utensils className="w-6 h-6 text-primary" />
-                <h3 className="text-xl font-black">Próxima Refeição</h3>
+                <Utensils className="w-5 h-5 text-primary" />
+                <h3 className="font-black">Próxima Refeição</h3>
               </div>
+              {nutritionPlan.calories && (
+                <div className="grid grid-cols-4 gap-2">
+                  <div className="text-center bg-white/5 rounded-xl p-2">
+                    <span className="text-xs font-black text-primary block">{nutritionPlan.calories}</span>
+                    <span className="text-[8px] font-bold text-slate-500 uppercase">Calorias</span>
+                  </div>
+                  <div className="text-center bg-white/5 rounded-xl p-2">
+                    <span className="text-xs font-black text-emerald-400 block">{nutritionPlan.protein}</span>
+                    <span className="text-[8px] font-bold text-slate-500 uppercase">Proteína</span>
+                  </div>
+                  <div className="text-center bg-white/5 rounded-xl p-2">
+                    <span className="text-xs font-black text-amber-400 block">{nutritionPlan.carbs}</span>
+                    <span className="text-[8px] font-bold text-slate-500 uppercase">Carbos</span>
+                  </div>
+                  <div className="text-center bg-white/5 rounded-xl p-2">
+                    <span className="text-xs font-black text-orange-400 block">{nutritionPlan.fat}</span>
+                    <span className="text-[8px] font-bold text-slate-500 uppercase">Gordura</span>
+                  </div>
+                </div>
+              )}
               <div>
-                <p className="text-slate-400 text-sm font-medium">Almoço Sugerido:</p>
-                <p className="text-lg font-bold text-white">{nutritionPlan.lunch}</p>
+                <p className="text-slate-400 text-xs font-medium">Almoço Sugerido:</p>
+                <p className="text-sm font-bold text-white">{nutritionPlan.lunch}</p>
               </div>
               <Link href="/nutrition">
                 <button className="text-primary font-black text-xs uppercase tracking-widest flex items-center gap-2 hover:gap-3 transition-all">
@@ -186,23 +277,30 @@ export default function Dashboard() {
         )}
 
         {/* Weight Evolution Chart */}
-        <section className="bg-white p-6 rounded-[32px] border border-slate-100 space-y-4">
+        <section className="bg-white p-5 rounded-[28px] border border-slate-100 space-y-3">
           <div className="flex justify-between items-start">
             <div>
                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Evolução de Peso</h3>
                <div className="flex items-baseline gap-1">
-                 <span className="text-3xl font-black">78.4</span>
+                 <span className="text-3xl font-black">{currentWeight || "--"}</span>
                  <span className="text-sm font-bold text-slate-400">kg</span>
                </div>
             </div>
-            <span className="text-xs font-black text-emerald-500 bg-emerald-50 px-2 py-1 rounded-full">↓ 1.2kg</span>
+            {weightChange && (
+              <span className={cn(
+                "text-xs font-black px-2 py-1 rounded-full",
+                parseFloat(weightChange) <= 0 ? "text-emerald-500 bg-emerald-50" : "text-red-500 bg-red-50"
+              )}>
+                {parseFloat(weightChange) <= 0 ? "↓" : "↑"} {Math.abs(parseFloat(weightChange))}kg
+              </span>
+            )}
           </div>
           <div className="h-[100px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-               <BarChart data={MOCK_WEIGHT}>
+               <BarChart data={WEIGHT_DATA}>
                  <Bar dataKey="weight" radius={[4, 4, 0, 0]}>
-                    {MOCK_WEIGHT.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={index === MOCK_WEIGHT.length - 1 ? "#7c3aed" : "#ede9fe"} />
+                    {WEIGHT_DATA.map((_: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={index === WEIGHT_DATA.length - 1 ? "#7c3aed" : "#ede9fe"} />
                     ))}
                  </Bar>
                </BarChart>
@@ -212,7 +310,7 @@ export default function Dashboard() {
 
         {/* Motivation Card */}
         {userData?.lastWorkout?.motivation && (
-          <section className="bg-primary/10 p-8 rounded-[32px] border border-primary/20">
+          <section className="bg-primary/10 p-6 rounded-[28px] border border-primary/20">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Motivação do Dia</h3>
             <p className="text-lg font-black italic text-slate-800 leading-tight">
               "{userData.lastWorkout.motivation}"
@@ -248,4 +346,3 @@ function NavBtn({ icon, label, active = false }: any) {
     </div>
   );
 }
-

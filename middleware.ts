@@ -14,6 +14,7 @@ const PROTECTED_PATHS = [
   "/api/user",
   "/api/onboarding",
   "/api/gemini",
+  "/api/ai",
 ];
 
 export async function middleware(req: NextRequest) {
@@ -62,5 +63,6 @@ export const config = {
     "/api/user/:path*",
     "/api/onboarding/:path*",
     "/api/gemini/:path*",
+    "/api/ai/:path*",
   ],
 };
