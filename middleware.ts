@@ -19,6 +19,7 @@ const PROTECTED_PATHS = [
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p));
+  if (pathname === "/api/admin/setup") return NextResponse.next();
 
   if (!isProtected) return NextResponse.next();
 
