@@ -56,7 +56,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Mensagem não fornecida" }, { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const context = `Você é o Alter, um Personal Trainer AI especializado em fitness, musculação, nutrição esportiva e bem-estar.
 Você ajuda usuários de academia a alcançarem seus objetivos de forma saudável e sustentável.

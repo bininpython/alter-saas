@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Zap, ArrowRight } from "lucide-react";
+import { Zap, ArrowRight, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -11,11 +11,13 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
     try {
       const res = await signIn("credentials", {
         email,
@@ -24,12 +26,12 @@ export default function LoginPage() {
       });
 
       if (res?.error) {
-        alert("Credenciais inválidas: " + res.error);
+        setError("E-mail ou senha incorretos. Tente novamente.");
       } else {
         router.push("/dashboard");
       }
-    } catch (error) {
-      alert("Ocorreu um erro ao fazer login");
+    } catch (err) {
+      setError("Ocorreu um erro ao fazer login. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -54,11 +56,23 @@ export default function LoginPage() {
           <p className="text-slate-500 font-medium italic">A performance de elite começa com o foco.</p>
         </div>
 
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 flex items-center gap-3 bg-red-50 border border-red-200 text-red-600 text-sm font-medium p-4 rounded-2xl"
+          >
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            {error}
+          </motion.div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="space-y-6">
             <div className="space-y-1">
               <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-4">E-mail</label>
               <input
+                id="login-email"
                 type="email"
                 placeholder="atleta@alter.com"
                 value={email}
@@ -71,6 +85,7 @@ export default function LoginPage() {
             <div className="space-y-1">
               <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-4">Senha</label>
               <input
+                id="login-password"
                 type="password"
                 placeholder="••••••••"
                 value={password}
@@ -86,6 +101,7 @@ export default function LoginPage() {
           </div>
 
           <button
+            id="login-submit"
             type="submit"
             disabled={loading}
             className="btn-primary w-full group"
@@ -102,6 +118,7 @@ export default function LoginPage() {
           </div>
 
           <button 
+            id="google-login"
             onClick={handleGoogleLogin}
             className="w-full py-4 rounded-full border-2 border-primary text-primary font-black flex items-center justify-center gap-3 hover:bg-primary/5 transition-colors"
           >

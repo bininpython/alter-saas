@@ -41,6 +41,10 @@ export default function NutritionPage() {
   const fetchUserData = async () => {
     try {
       const res = await axios.get("/api/user/data");
+      if (!res.data.user.onboardingCompleted) {
+        router.push("/onboarding");
+        return;
+      }
       setUserData(res.data);
     } catch (error) {
       console.error("Erro ao carregar dados", error);

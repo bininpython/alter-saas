@@ -50,6 +50,7 @@ export default function Onboarding() {
     level: "",
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -78,12 +79,12 @@ export default function Onboarding() {
 
   const handleSubmit = async (formData: any) => {
     setLoading(true);
+    setError("");
     try {
       await axios.post("/api/onboarding", formData);
       router.push("/dashboard");
-    } catch (error) {
-      alert("Erro ao gerar seu plano de elite.");
-    } finally {
+    } catch (err) {
+      setError("Erro ao gerar seu plano de elite. Tente novamente.");
       setLoading(false);
     }
   };
@@ -144,12 +145,29 @@ export default function Onboarding() {
           </motion.div>
         </AnimatePresence>
 
-        {loading && (
+        {(loading || error) && (
           <div className="fixed inset-0 bg-white/80 backdrop-blur-md flex flex-col items-center justify-center z-50">
-             <div className="w-16 h-16 bg-primary rounded-full animate-ping flex items-center justify-center">
-                <Zap className="w-8 h-8 text-white fill-white" />
-             </div>
-             <p className="mt-8 text-xl font-black uppercase tracking-widest text-primary italic">Analisando Perfil...</p>
+             {loading ? (
+               <>
+                 <div className="w-16 h-16 bg-primary rounded-full animate-ping flex items-center justify-center">
+                    <Zap className="w-8 h-8 text-white fill-white" />
+                 </div>
+                 <p className="mt-8 text-xl font-black uppercase tracking-widest text-primary italic">Analisando Perfil...</p>
+               </>
+             ) : (
+               <>
+                 <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-2xl font-black">!</span>
+                 </div>
+                 <p className="mt-8 text-lg font-black text-red-500">{error}</p>
+                 <button 
+                   onClick={() => { setError(""); setCurrentStep(STEPS.length - 1); }} 
+                   className="mt-4 btn-primary"
+                 >
+                   Tentar Novamente
+                 </button>
+               </>
+             )}
           </div>
         )}
 

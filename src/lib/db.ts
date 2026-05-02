@@ -1,17 +1,7 @@
-import fs from 'fs';
-import path from 'path';
+// Legacy flat-file database module.
+// The application now uses Prisma (PostgreSQL) for all data operations.
+// This module is kept for reference only and should not be used.
+//
+// All database operations should use: import prisma from "@/lib/prisma";
 
-const DB_PATH = path.join(process.cwd(), 'data.json');
-
-if (!fs.existsSync(DB_PATH)) {
-  fs.writeFileSync(DB_PATH, JSON.stringify({ users: [], workouts: [], checkins: [] }, null, 2));
-}
-
-export const readDB = () => {
-  const data = fs.readFileSync(DB_PATH, 'utf-8');
-  return JSON.parse(data);
-};
-
-export const writeDB = (data: any) => {
-  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
-};
+export {};

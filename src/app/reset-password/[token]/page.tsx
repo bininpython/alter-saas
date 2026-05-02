@@ -1,26 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useState, use } from "react";
 import { motion } from "framer-motion";
 import { Zap, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 
-export default function ResetPasswordPage({ params }: { params: { token: string } }) {
+export default function ResetPasswordPage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = use(params);
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    
+    if (password.length < 8) {
+      setError("A senha deve ter pelo menos 8 caracteres.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("As senhas não coincidem.");
+      return;
+    }
+
     setLoading(true);
     try {
-      await axios.post("/api/auth/reset-password", { token: params.token, password });
+      await axios.post("/api/auth/reset-password", { token, password });
       alert("Senha atualizada com sucesso. Faça login.");
       router.push("/login");
-    } catch (error: any) {
-      alert(error.response?.data?.error || "Erro ao redefinir senha");
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Erro ao redefinir senha");
     } finally {
       setLoading(false);
     }
@@ -41,18 +56,38 @@ export default function ResetPasswordPage({ params }: { params: { token: string 
           <p className="text-slate-500 font-medium italic">Redefinir senha</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-1">
             <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-4">Nova Senha</label>
             <input
               type="password"
-              placeholder="••••••••"
+              placeholder="Mínimo 8 caracteres"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="input-premium"
               required
+              minLength={8}
             />
           </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-4">Confirmar Senha</label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="input-premium"
+              required
+              minLength={8}
+            />
+          </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 text-sm font-medium p-4 rounded-2xl">
+              {error}
+            </div>
+          )}
 
           <button type="submit" disabled={loading} className="btn-primary w-full group">
             {loading ? "Salvando..." : "Salvar senha"}
@@ -69,4 +104,3 @@ export default function ResetPasswordPage({ params }: { params: { token: string 
     </div>
   );
 }
-
