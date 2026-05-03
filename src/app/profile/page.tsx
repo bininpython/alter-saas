@@ -91,12 +91,12 @@ export default function ProfilePage() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 flex justify-around p-4 z-50">
-        <Link href="/dashboard"><NavBtn icon={<Home className="w-6 h-6" />} label="Home" /></Link>
-        <Link href="/training"><NavBtn icon={<Dumbbell className="w-6 h-6" />} label="Training" /></Link>
-        <Link href="/nutrition"><NavBtn icon={<Utensils className="w-6 h-6" />} label="Nutrition" /></Link>
-        <Link href="/progress"><NavBtn icon={<TrendingUp className="w-6 h-6" />} label="Progress" /></Link>
-        <Link href="/profile"><NavBtn icon={<UserIcon className="w-6 h-6" />} label="Profile" active /></Link>
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 flex justify-around p-4 z-50 pb-safe">
+        <Link href="/dashboard"><NavBtn icon={<Home className="w-6 h-6" />} label="Início" /></Link>
+        <Link href="/training"><NavBtn icon={<Dumbbell className="w-6 h-6" />} label="Treino" /></Link>
+        <Link href="/nutrition"><NavBtn icon={<Utensils className="w-6 h-6" />} label="Dieta" /></Link>
+        <Link href="/progress"><NavBtn icon={<TrendingUp className="w-6 h-6" />} label="Progresso" /></Link>
+        <Link href="/profile"><NavBtn icon={<UserIcon className="w-6 h-6" />} label="Perfil" active /></Link>
       </nav>
     </div>
   );

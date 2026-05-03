@@ -217,6 +217,14 @@ export default function Dashboard() {
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{trainingPlan.days[0]?.day}</span>
               </div>
               <p className="text-sm font-medium text-slate-500">Foco: {trainingPlan.days[0]?.focus}</p>
+              
+              {trainingPlan.tips && (
+                <div className="bg-primary/5 p-3 rounded-2xl border border-primary/10">
+                  <span className="text-[9px] font-black uppercase text-primary tracking-widest flex items-center gap-1 mb-1"><Zap className="w-3 h-3" /> Progressão</span>
+                  <p className="text-xs font-bold text-slate-700">{trainingPlan.tips}</p>
+                </div>
+              )}
+
               <div className="space-y-2">
                 {trainingPlan.days[0]?.exercises.slice(0, 4).map((ex: any, i: number) => (
                   <div key={i} className="flex justify-between text-xs font-bold py-1">
@@ -237,12 +245,25 @@ export default function Dashboard() {
         {/* Nutrition Preview */}
         {nutritionPlan && (
           <section className="space-y-3">
-            <h2 className="text-xl font-black">Nutrição</h2>
-            <div className="bg-[#191c1e] p-6 rounded-[28px] text-white space-y-3">
+            <h2 className="text-xl font-black">Nutrição & Hábitos</h2>
+            <div className="bg-[#191c1e] p-6 rounded-[28px] text-white space-y-4">
               <div className="flex items-center gap-3">
                 <Utensils className="w-5 h-5 text-primary" />
-                <h3 className="font-black">Próxima Refeição</h3>
+                <h3 className="font-black">Sua Base Diária</h3>
               </div>
+              
+              {nutritionPlan.water && (
+                 <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded-2xl flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                        <span className="text-blue-400 text-sm">💧</span>
+                      </div>
+                      <span className="text-xs font-bold text-blue-100">Meta de Água</span>
+                    </div>
+                    <span className="text-sm font-black text-blue-400">{nutritionPlan.water}</span>
+                 </div>
+              )}
+
               {nutritionPlan.calories && (
                 <div className="grid grid-cols-4 gap-2">
                   <div className="text-center bg-white/5 rounded-xl p-2">
@@ -263,6 +284,13 @@ export default function Dashboard() {
                   </div>
                 </div>
               )}
+              
+              {nutritionPlan.tips && (
+                <p className="text-[10px] font-medium text-slate-400 italic">
+                  * {nutritionPlan.tips}
+                </p>
+              )}
+
               <div>
                 <p className="text-slate-400 text-xs font-medium">Almoço Sugerido:</p>
                 <p className="text-sm font-bold text-white">{nutritionPlan.lunch}</p>
@@ -320,12 +348,12 @@ export default function Dashboard() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 flex justify-around p-4 z-50">
-        <Link href="/dashboard"><NavBtn icon={<Home className="w-6 h-6" />} label="Home" active /></Link>
-        <Link href="/training"><NavBtn icon={<Dumbbell className="w-6 h-6" />} label="Training" /></Link>
-        <Link href="/nutrition"><NavBtn icon={<Utensils className="w-6 h-6" />} label="Nutrition" /></Link>
-        <Link href="/progress"><NavBtn icon={<TrendingUp className="w-6 h-6" />} label="Progress" /></Link>
-        <Link href="/profile"><NavBtn icon={<UserIcon className="w-6 h-6" />} label="Profile" /></Link>
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 flex justify-around p-4 z-50 pb-safe">
+        <Link href="/dashboard"><NavBtn icon={<Home className="w-6 h-6" />} label="Início" active /></Link>
+        <Link href="/training"><NavBtn icon={<Dumbbell className="w-6 h-6" />} label="Treino" /></Link>
+        <Link href="/nutrition"><NavBtn icon={<Utensils className="w-6 h-6" />} label="Dieta" /></Link>
+        <Link href="/progress"><NavBtn icon={<TrendingUp className="w-6 h-6" />} label="Progresso" /></Link>
+        <Link href="/profile"><NavBtn icon={<UserIcon className="w-6 h-6" />} label="Perfil" /></Link>
       </nav>
 
       <ChatBot />

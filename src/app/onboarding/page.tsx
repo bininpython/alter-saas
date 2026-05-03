@@ -42,6 +42,17 @@ const CHOICE_STEPS = [
     ]
   },
   {
+    id: "targetBodyPart",
+    title: "Qual seu foco corporal?",
+    desc: "Onde você quer ver mais resultados?",
+    options: [
+      { id: "geral", label: "Corpo Todo", icon: <User className="w-6 h-6" /> },
+      { id: "peito_bracos", label: "Peito e Braços", icon: <Dumbbell className="w-6 h-6" /> },
+      { id: "pernas_gluteos", label: "Pernas e Glúteos", icon: <Zap className="w-6 h-6" /> },
+      { id: "abdomen", label: "Abdômen (Core)", icon: <Target className="w-6 h-6" /> },
+    ]
+  },
+  {
     id: "level",
     title: "Nível de experiência?",
     desc: "Adaptando o desafio ao seu ponto de partida.",
@@ -71,6 +82,7 @@ export default function Onboarding() {
   const [form, setForm] = useState<any>({
     gender: "",
     goal: "",
+    targetBodyPart: "",
     level: "",
     frequency: "3",
     weight: "",

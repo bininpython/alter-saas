@@ -129,7 +129,8 @@ export default function NutritionPage() {
               </div>
               <div>
                  <h3 className="font-black text-lg">Água</h3>
-                 <p className="text-sm font-bold text-primary/60">{waterIntake}ml / 3500ml</p>
+                 <p className="text-sm font-bold text-primary/60">{waterIntake}ml consumidos</p>
+                 <span className="text-[10px] font-black uppercase text-primary tracking-widest block mt-1">Meta: {nutritionPlan.water}</span>
               </div>
            </div>
            <button 
@@ -174,7 +175,7 @@ export default function NutritionPage() {
         {/* Nutrition Tips */}
         {nutritionPlan.tips && (
           <section className="bg-[#191c1e] p-8 rounded-[40px] text-white space-y-4">
-             <h3 className="text-[10px] font-black uppercase tracking-widest text-primary">Dicas do Nutri AI</h3>
+             <h3 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2"><Zap className="w-4 h-4"/> Dicas do Nutri AI</h3>
              <p className="text-sm font-medium leading-relaxed text-slate-400">
                 {nutritionPlan.tips}
              </p>
@@ -183,12 +184,12 @@ export default function NutritionPage() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 flex justify-around p-4 z-50">
-        <Link href="/dashboard"><NavBtn icon={<Home className="w-6 h-6" />} label="Home" /></Link>
-        <Link href="/training"><NavBtn icon={<Dumbbell className="w-6 h-6" />} label="Training" /></Link>
-        <Link href="/nutrition"><NavBtn icon={<Utensils className="w-6 h-6" />} label="Nutrition" active /></Link>
-        <Link href="/progress"><NavBtn icon={<TrendingUp className="w-6 h-6" />} label="Progress" /></Link>
-        <Link href="/profile"><NavBtn icon={<UserIcon className="w-6 h-6" />} label="Profile" /></Link>
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 flex justify-around p-4 z-50 pb-safe">
+        <Link href="/dashboard"><NavBtn icon={<Home className="w-6 h-6" />} label="Início" /></Link>
+        <Link href="/training"><NavBtn icon={<Dumbbell className="w-6 h-6" />} label="Treino" /></Link>
+        <Link href="/nutrition"><NavBtn icon={<Utensils className="w-6 h-6" />} label="Dieta" active /></Link>
+        <Link href="/progress"><NavBtn icon={<TrendingUp className="w-6 h-6" />} label="Progresso" /></Link>
+        <Link href="/profile"><NavBtn icon={<UserIcon className="w-6 h-6" />} label="Perfil" /></Link>
       </nav>
     </div>
   );

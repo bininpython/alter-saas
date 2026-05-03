@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     
     const userId = (session.user as any).id;
     const body = await req.json();
-    const { gender, goal, level, weight, height, age, frequency, name } = body;
+    const { gender, goal, level, weight, height, age, frequency, name, targetBodyPart } = body;
 
     // Busca treino recente para cache (últimas 24h)
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -63,6 +63,7 @@ export async function POST(req: Request) {
       height: height || undefined,
       age: age || undefined,
       frequency: frequency || 3,
+      targetBodyPart: targetBodyPart || undefined,
     });
     
     // Salva o novo plano no banco
