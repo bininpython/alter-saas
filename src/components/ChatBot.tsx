@@ -21,18 +21,31 @@ const QUICK_ACTIONS = [
 
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content: "E aí, campeão! 💪 Sou o ALTER, seu Personal Trainer AI!\n\nEstou aqui para montar treinos, planos de refeição, acompanhar seu peso e te manter motivado.\n\nPor onde quer começar? Me conta seu peso atual ou escolha uma opção abaixo! 🔥",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [weightMode, setWeightMode] = useState(false);
   const [weightInput, setWeightInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("alter_chat_history");
+    if (saved) {
+      try {
+        setMessages(JSON.parse(saved));
+      } catch (e) {
+        // ignore
+      }
+    } else {
+      setMessages([
+        {
+          id: "1",
+          role: "assistant",
+          content: "E aí, campeão! 💪 Sou o ALTER, seu Personal Trainer AI!\n\nEstou aqui para montar treinos, planos de refeição, acompanhar seu peso e te manter motivado.\n\nPor onde quer começar? Me conta seu peso atual ou escolha uma opção abaixo! 🔥",
+        }
+      ]);
+    }
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -40,6 +53,9 @@ export default function ChatBot() {
 
   useEffect(() => {
     scrollToBottom();
+    if (messages.length > 0) {
+      localStorage.setItem("alter_chat_history", JSON.stringify(messages));
+    }
   }, [messages]);
 
   // Build chat history for context

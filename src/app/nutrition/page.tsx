@@ -29,6 +29,7 @@ export default function NutritionPage() {
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [waterIntake, setWaterIntake] = useState(0);
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -76,6 +77,10 @@ export default function NutritionPage() {
     );
   }
 
+  // Fallback para plano antigo que não tinha dailyDiets
+  const hasDailyDiets = nutritionPlan.dailyDiets && Array.isArray(nutritionPlan.dailyDiets) && nutritionPlan.dailyDiets.length > 0;
+  const currentDiet = hasDailyDiets ? nutritionPlan.dailyDiets[selectedDayIndex] : nutritionPlan;
+
   return (
     <div className="min-h-screen bg-[#f7f9fb] pb-24 text-[#191c1e]">
       {/* Header */}
@@ -102,19 +107,19 @@ export default function NutritionPage() {
            <div className="grid grid-cols-3 gap-4">
               <div className="text-center">
                  <div className="w-full aspect-square rounded-2xl bg-slate-50 flex flex-col items-center justify-center border border-slate-100 mb-2">
-                    <span className="text-xl font-black text-primary">165g</span>
+                    <span className="text-xl font-black text-primary">{nutritionPlan.protein || "165g"}</span>
                  </div>
                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Proteína</span>
               </div>
               <div className="text-center">
                  <div className="w-full aspect-square rounded-2xl bg-slate-50 flex flex-col items-center justify-center border border-slate-100 mb-2">
-                    <span className="text-xl font-black text-[#191c1e]">220g</span>
+                    <span className="text-xl font-black text-[#191c1e]">{nutritionPlan.carbs || "220g"}</span>
                  </div>
                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Carbos</span>
               </div>
               <div className="text-center">
                  <div className="w-full aspect-square rounded-2xl bg-slate-50 flex flex-col items-center justify-center border border-slate-100 mb-2">
-                    <span className="text-xl font-black text-[#191c1e]">73g</span>
+                    <span className="text-xl font-black text-[#191c1e]">{nutritionPlan.fat || "73g"}</span>
                  </div>
                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Gorduras</span>
               </div>
@@ -143,30 +148,52 @@ export default function NutritionPage() {
 
         {/* Meal Plan */}
         <section className="space-y-6">
-           <h2 className="text-2xl font-black">Plano de Refeições</h2>
+           <div className="flex justify-between items-center">
+             <h2 className="text-2xl font-black">Plano de Refeições</h2>
+           </div>
+
+           {hasDailyDiets && (
+             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+               {nutritionPlan.dailyDiets.map((dietObj: any, index: number) => (
+                 <button
+                   key={index}
+                   onClick={() => setSelectedDayIndex(index)}
+                   className={cn(
+                     "px-4 py-2 rounded-2xl whitespace-nowrap font-bold text-sm transition-all border",
+                     selectedDayIndex === index 
+                       ? "bg-primary text-white border-primary" 
+                       : "bg-white text-slate-400 border-slate-100"
+                   )}
+                 >
+                   {dietObj.dayName || `Dia ${index + 1}`}
+                 </button>
+               ))}
+             </div>
+           )}
+
            <div className="space-y-4">
               <MealCard 
                 time="07:00" 
                 name="Café da Manhã" 
-                items={nutritionPlan.breakfast} 
+                items={currentDiet.breakfast} 
                 icon={<Clock className="w-5 h-5 text-amber-500" />}
               />
               <MealCard 
                 time="12:00" 
                 name="Almoço" 
-                items={nutritionPlan.lunch} 
+                items={currentDiet.lunch} 
                 icon={<Beef className="w-5 h-5 text-red-500" />}
               />
               <MealCard 
                 time="16:00" 
                 name="Lanche" 
-                items={nutritionPlan.snack} 
+                items={currentDiet.snack} 
                 icon={<Clock className="w-5 h-5 text-orange-400" />}
               />
               <MealCard 
                 time="20:00" 
                 name="Jantar" 
-                items={nutritionPlan.dinner} 
+                items={currentDiet.dinner} 
                 icon={<Utensils className="w-5 h-5 text-emerald-500" />}
               />
            </div>

@@ -29,6 +29,7 @@ export default function TrainingPage() {
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
 
   const [isWorkoutStarted, setIsWorkoutStarted] = useState(false);
 
@@ -64,18 +65,19 @@ export default function TrainingPage() {
   }
 
   const trainingPlan = userData?.lastWorkout?.training;
-  const currentDay = trainingPlan?.days[0];
+  const days = trainingPlan?.days || [];
+  const currentDay = days[selectedDayIndex];
   const exercises = currentDay?.exercises || [];
   const currentExercise = exercises[currentExerciseIndex];
 
-  if (!currentDay) {
+  if (days.length === 0 || !currentDay) {
     return (
       <div className="min-h-screen bg-[#f7f9fb] p-6 flex flex-col items-center justify-center text-center space-y-4">
         <Dumbbell className="w-16 h-16 text-slate-300" />
         <h2 className="text-2xl font-black">Nenhum treino encontrado</h2>
         <p className="text-slate-500">Complete o onboarding para gerar seu primeiro plano.</p>
         <Link href="/onboarding">
-          <button className="btn-primary px-8">Fazer Onboarding</button>
+          <button className="btn-primary px-8 py-3">Fazer Onboarding</button>
         </Link>
       </div>
     );
@@ -100,9 +102,31 @@ export default function TrainingPage() {
       <main className="p-6 space-y-6 max-w-lg mx-auto">
         {!isWorkoutStarted ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+            
+            {/* Day Selector */}
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+              {days.map((dayObj: any, index: number) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setSelectedDayIndex(index);
+                    setCurrentExerciseIndex(0);
+                  }}
+                  className={cn(
+                    "px-4 py-2 rounded-2xl whitespace-nowrap font-bold text-sm transition-all border",
+                    selectedDayIndex === index 
+                      ? "bg-primary text-white border-primary" 
+                      : "bg-white text-slate-400 border-slate-100"
+                  )}
+                >
+                  {dayObj.day || `Treino ${index + 1}`}
+                </button>
+              ))}
+            </div>
+
             <div className="space-y-2">
               <h1 className="text-3xl font-black">{currentDay.focus}</h1>
-              <p className="text-sm text-slate-500 font-medium">Ficha Completa de Treino ({exercises.length} exercícios)</p>
+              <p className="text-sm text-slate-500 font-medium">Ficha de Treino Semanal ({exercises.length} exercícios)</p>
             </div>
 
             {trainingPlan?.tips && (

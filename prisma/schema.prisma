@@ -45,6 +45,7 @@ model User {
   goal          String?
   level         String?
   gender        String?
+  targetBodyPart String?
   role          String    @default("user")
   plan          String    @default("free")
   streak        Int       @default(0)

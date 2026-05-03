@@ -120,7 +120,7 @@ function getFallbackPlan(userData: any) {
 
 export async function generateFitnessPlan(userData: any) {
   const prompt = `Você é um personal trainer IA brasileiro extremamente exclusivo, focado em hiper-personalização. Você não cria treinos genéricos. Você cria obras-primas únicas para cada aluno.
-Crie um plano completo 100% personalizado, evitando qualquer repetição de treinos passados e focado exatamente no que o usuário quer.
+Crie um PLANO MENSAL completo 100% personalizado, focado exatamente no que o usuário quer. O plano mensal consiste em um bloco de progressão de carga (onde a rotina semanal se repete por 4 semanas, com carga progressiva) e uma dieta mensal detalhada.
 
 Dados ÚNICOS deste Usuário:
 - Nome: ${userData.name || "Atleta"}
@@ -131,11 +131,15 @@ Dados ÚNICOS deste Usuário:
 - Peso atual: ${userData.weight || "Não informado"}kg
 - Histórico: ${userData.totalWorkouts || 0} treinos já realizados.
 
-DIRETRIZES DO TREINO:
+DIRETRIZES DO TREINO MENSAL:
 1. FOCO: Priorize exercícios que trabalhem intensamente a área de foco: ${userData.targetBodyPart || "Geral"}.
-2. EXPLICAÇÃO (Para Iniciantes): Em cada exercício, adicione uma chave "target" (o músculo) e uma "explanation" explicando brevemente para que serve aquele movimento.
-3. PROGRESSÃO: Especifique como ele deve progredir a carga na chave "tips".
-4. HÁBITOS: Inclua metas exatas de água e diretrizes alimentares baseadas no peso.
+2. DIVISÃO COMPLETA: O array "days" DEVE conter todos os dias do microciclo semanal da pessoa (ex: se for 3x, gere 3 objetos "day". Se for 5x, gere 5).
+3. EXPLICAÇÃO (Para Iniciantes): Em cada exercício, adicione uma chave "target" (o músculo) e uma "explanation" explicando brevemente para que serve aquele movimento.
+4. PROGRESSÃO MENSAL: Especifique como progredir a carga mês a mês na chave "tips".
+
+DIRETRIZES DA DIETA MENSAL:
+1. VARIEDADE: No array "dailyDiets", crie EXATAMENTE 7 opções de dias (um para cada dia da semana: Segunda-feira a Domingo), dando variedade diária ao cardápio mensal.
+2. HÁBITOS: Inclua metas exatas de água baseadas no peso.
 
 Responda EXCLUSIVAMENTE em formato JSON com esta estrutura EXATA:
 {
@@ -143,14 +147,14 @@ Responda EXCLUSIVAMENTE em formato JSON com esta estrutura EXATA:
     "split": "Nome criativo e único da divisão (ex: 'Destruidor de Deltóides do [Nome]')",
     "days": [
       {
-        "day": "Dia da semana",
+        "day": "Nome do dia (ex: Segunda-feira)",
         "focus": "Foco do dia",
         "exercises": [
           {"name": "Exercício", "sets": "4", "reps": "12", "rest": "60s", "target": "Músculo Alvo", "explanation": "Por que estamos fazendo isso e o que ele trabalha"}
         ]
       }
     ],
-    "tips": "Dicas de treino E estratégia exata de PROGRESSÃO DE CARGA."
+    "tips": "Como progredir a carga durante o MÊS."
   },
   "nutrition": {
     "calories": "X kcal",
@@ -158,11 +162,16 @@ Responda EXCLUSIVAMENTE em formato JSON com esta estrutura EXATA:
     "carbs": "Z g",
     "fat": "W g",
     "water": "Meta de água (ex: 3.5 Litros)",
-    "breakfast": "Sugestão café da manhã única",
-    "lunch": "Sugestão almoço",
-    "snack": "Sugestão lanche",
-    "dinner": "Sugestão jantar",
-    "tips": "Dicas nutricionais e controle de hábitos"
+    "dailyDiets": [
+      {
+        "dayName": "Nome do dia (ex: Segunda-feira)",
+        "breakfast": "Sugestão café da manhã única",
+        "lunch": "Sugestão almoço",
+        "snack": "Sugestão lanche",
+        "dinner": "Sugestão jantar"
+      }
+    ],
+    "tips": "Dicas nutricionais e controle de hábitos para o mês"
   },
   "motivation": "Frase motivacional impactante e super pessoal para o [Nome]"
 }

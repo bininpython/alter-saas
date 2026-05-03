@@ -39,6 +39,8 @@ export default function Dashboard() {
   const [weeklyReport, setWeeklyReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [reportLoading, setReportLoading] = useState(false);
+  const [updatingFocus, setUpdatingFocus] = useState(false);
+  const [showFocusModal, setShowFocusModal] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -64,6 +66,20 @@ export default function Dashboard() {
     }
   };
 
+  const updateBodyFocus = async (newFocus: string) => {
+    setShowFocusModal(false);
+    setUpdatingFocus(true);
+    try {
+      await axios.post("/api/user/target", { targetBodyPart: newFocus });
+      await fetchUserData(); // reload to get new plan
+    } catch (error) {
+      console.error("Erro ao atualizar foco", error);
+      alert("Erro ao recriar plano. Tente novamente.");
+    } finally {
+      setUpdatingFocus(false);
+    }
+  };
+
   const fetchWeeklyReport = async () => {
     setReportLoading(true);
     try {
@@ -76,10 +92,11 @@ export default function Dashboard() {
     }
   };
 
-  if (loading) {
+  if (loading || updatingFocus) {
     return (
-      <div className="min-h-screen bg-[#f7f9fb] flex items-center justify-center">
+      <div className="min-h-screen bg-[#f7f9fb] flex flex-col items-center justify-center space-y-4">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        {updatingFocus && <p className="text-primary font-black animate-pulse text-sm uppercase tracking-widest text-center px-6">A IA está reconstruindo seu plano mensal...</p>}
       </div>
     );
   }
@@ -131,6 +148,20 @@ export default function Dashboard() {
           </div>
         </section>
 
+        {/* Change Focus Section */}
+        <section className="bg-white p-4 rounded-3xl border border-slate-100 flex items-center justify-between shadow-sm">
+          <div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Foco Muscular Mensal</span>
+            <span className="font-bold text-primary">{userData?.user?.targetBodyPart || "Corpo Todo"}</span>
+          </div>
+          <button 
+            onClick={() => setShowFocusModal(true)}
+            className="text-xs bg-slate-50 px-4 py-2 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-colors border border-slate-200"
+          >
+            Mudar Foco
+          </button>
+        </section>
+
         {/* Start Training Button */}
         <Link href="/training">
           <button className="btn-primary w-full py-6 flex items-center justify-center gap-4 text-xl tracking-wider">
@@ -138,6 +169,33 @@ export default function Dashboard() {
             COMEÇAR TREINO
           </button>
         </Link>
+
+        {/* Focus Modal */}
+        {showFocusModal && (
+          <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-6 backdrop-blur-sm">
+            <div className="bg-white rounded-[40px] p-8 w-full max-w-sm space-y-6">
+              <h2 className="text-2xl font-black text-center">Novo Foco Muscular</h2>
+              <p className="text-center text-slate-500 text-sm font-medium">A IA irá gerar um plano MENSAL totalmente novo focado na área escolhida.</p>
+              <div className="grid grid-cols-2 gap-3">
+                {["Peito", "Costas", "Pernas", "Ombros", "Braços", "Glúteos", "Abdômen", "Corpo Todo"].map((part) => (
+                  <button
+                    key={part}
+                    onClick={() => updateBodyFocus(part)}
+                    className="p-3 bg-slate-50 rounded-2xl font-bold text-sm text-slate-700 border border-slate-100 hover:border-primary hover:bg-primary/5 transition-colors"
+                  >
+                    {part}
+                  </button>
+                ))}
+              </div>
+              <button 
+                onClick={() => setShowFocusModal(false)}
+                className="w-full p-4 rounded-2xl font-bold text-slate-400 mt-2 hover:bg-slate-50 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Stats Grid */}
         <section className="grid grid-cols-3 gap-3">
